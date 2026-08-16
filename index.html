@@ -3,21 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F1 Predictor 2026</title>
+<title>F1 Predictor 2026 — Sequential AI</title>
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏎️</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23ff1e3c'/><text x='50' y='72' font-size='56' font-weight='900' font-family='Arial' fill='white' text-anchor='middle'>F1</text></svg>">
 </head>
 <body>
-<header>
-  <div class="logo">
-    <div class="f1dot">F1</div>
-    <div>Predictor 2026<small>predict first · then the AI learns</small></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brandmark">F1</div>
+    <div class="brandtext">
+      <b>PREDICTOR</b><span>2026</span>
+      <small>sequential AI &middot; predict &middot; observe &middot; learn</small>
+    </div>
   </div>
   <nav id="nav">
     <button data-tab="dashboard" class="active">Dashboard</button>
     <button data-tab="predict">Predictions</button>
     <button data-tab="results">Results</button>
-    <button data-tab="dev">Dev Packages</button>
+    <button data-tab="dev">Upgrades</button>
     <button data-tab="learn">Learning</button>
     <button data-tab="data">Data</button>
   </nav>
@@ -34,6 +38,12 @@
   <section id="tab-learn" class="tab"></section>
   <section id="tab-data" class="tab"></section>
 </main>
+
+<footer class="appfoot">
+  <span>F1 Predictor 2026</span>
+  <span class="footsep">&middot;</span>
+  <span>The AI only knows what happened so far — one forecast, then it learns from reality.</span>
+</footer>
 
 <script src="data.js"></script>
 <script src="engine.js"></script>

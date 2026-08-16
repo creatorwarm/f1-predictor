@@ -1,15 +1,16 @@
-﻿/* F1 Predictor 2026 - dev packages, learning, data, events, init */
+﻿/* F1 Predictor 2026 — upgrades, learning, data, events, init */
+'use strict';
 
 /* ---------- dev packages ---------- */
 function renderDev() {
   const el = $('#tab-dev');
-  let html = '<h1>Development packages</h1><p class="sub">Log when a team brings an upgrade to a race and how much you think it helped. The AI adds it to that team\'s predicted pace â€” then learns from your verdicts and the actual results to calibrate your estimates.</p>';
+  let html = '<h1>Development packages</h1><p class="page-sub">Log when a team brings an upgrade to a race and how much you think it helped. The AI adds it to that team’s predicted pace — then learns from your verdicts and the actual results to calibrate your estimates.</p>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Add a new package</h2><div class="grid3">';
+  html += '<div class="card"><div class="card-hd"><span class="micro gold">Add a new package</span></div><div class="grid3">';
   html += '<div><label class="fld">Team</label><select data-a="devTeam">' + Object.keys(TEAMS).map(t => '<option value="' + t + '"' + (ui.devTeam === t ? ' selected' : '') + '>' + esc(TEAMS[t].name) + '</option>').join('') + '</select></div>';
   html += '<div><label class="fld">Introduced at</label>' + raceSelectHtml('devRaceSel') + '</div>';
   html += '<div><label class="fld">Estimated impact</label><input type="range" class="slider" min="5" max="100" step="5" value="' + ui.devImpact + '" data-a="devImpact">';
-  html += '<div class="spread"><span class="hint">Minor tweak â†’</span><span class="hint">â† game-changing</span><b>' + ui.devImpact + '/100</b></div></div>';
+  html += '<div class="spread"><span class="hint">Minor tweak →</span><span class="hint">← game-changing</span><b>' + ui.devImpact + '/100</b></div></div>';
   html += '</div>';
   html += '<div class="formrow" style="margin-top:10px"><label class="fld">Est. lap-time gain (optional, e.g. 0.25s)</label><input data-a="devGain" value="' + esc(ui.devGain) + '" placeholder="seconds"></div>';
   html += '<div class="formrow"><label class="fld">Notes</label><textarea data-a="devNote" placeholder="e.g. New floor + beam wing, rear wing tuned for street circuits">' + esc(ui.devNote) + '</textarea></div>';
@@ -25,20 +26,20 @@ function renderDev() {
 
   const list = state.devPackages.filter(p => ui.devFilter === 'all' || p.raceId === ui.devFilter);
   if (!list.length) {
-    html += '<div class="card"><div class="empty"><div class="big">ðŸ”§</div>No development packages logged yet.<br><span class="hint">When a team shows up with a new floor, wing or engine upgrade â€” log it here.</span></div></div>';
+    html += '<div class="card"><div class="empty"><div class="big">🔧</div>No development packages logged yet.<br><span class="hint">When a team shows up with a new floor, wing or engine upgrade — log it here.</span></div></div>';
   }
   list.forEach(p => {
     const t = teamById(p.teamId);
     const r = raceById(p.raceId);
     const verdictText = p.verdict ? { helped: 'Verified: helped', hurt: 'Verified: hurt', neutral: 'Verified: no change' }[p.verdict] : 'Awaiting verdict';
-    html += '<div class="devpkg"><div class="head">';
+    html += '<div class="pkg"><div class="head">';
     html += '<img class="timg" style="width:30px;height:30px" src="' + esc(t.logo) + '">';
-    html += '<div><b style="color:' + t.color + '">' + esc(t.name) + '</b> <span class="muted">Â· introduced ' + r.flag + ' R' + r.round + ' ' + esc(r.name) + '</span></div>';
+    html += '<div><b style="color:' + t.color + '">' + esc(t.name) + '</b> <span class="muted">· introduced ' + r.flag + ' R' + r.round + ' ' + esc(r.name) + '</span></div>';
     html += '<span class="impactpill" style="background:rgba(229,179,52,.15);color:var(--gold)">impact ' + p.impact + '/100</span>';
-    if (p.gain) html += '<span class="impactpill" style="background:rgba(91,168,214,.15);color:var(--blue)">~' + esc(p.gain) + 's claimed</span>';
-    if (p.removed) html += '<span class="impactpill" style="background:rgba(231,76,60,.15);color:var(--red)">removed</span>';
+    if (p.gain) html += '<span class="impactpill" style="background:rgba(65,166,255,.15);color:var(--blue)">~' + esc(p.gain) + 's claimed</span>';
+    if (p.removed) html += '<span class="impactpill" style="background:rgba(255,91,91,.15);color:var(--red)">removed</span>';
     html += '</div>';
-    if (p.note) html += '<div class="hint" style="margin-top:6px">â€œ' + esc(p.note) + 'â€</div>';
+    if (p.note) html += '<div class="note">“' + esc(p.note) + '”</div>';
     html += '<div class="row" style="margin-top:8px">';
     if (!p.removed) {
       html += '<span class="hint" style="margin-right:4px">Did it help?</span>';
@@ -66,7 +67,7 @@ function lineChartHTML(seriesDef, xLabels) {
   const W = 700, H = 170, P = 30;
   const allVals = [];
   seriesDef.forEach(s => s.values.forEach(v => allVals.push(v)));
-  if (!allVals.length) return '<div class="hint">No data yet â€” enter a few race results and watch the AI improve.</div>';
+  if (!allVals.length) return '<div class="hint">No data yet — enter a few race results and watch the AI improve.</div>';
   const min = Math.floor(Math.min.apply(null, allVals) - 0.5);
   const max = Math.ceil(Math.max.apply(null, allVals) + 0.5);
   const span = Math.max(1, max - min);
@@ -76,12 +77,12 @@ function lineChartHTML(seriesDef, xLabels) {
   for (let g = 0; g <= 4; g++) {
     const y = 12 + g * ((H - 40) / 4);
     const val = max - g * (span / 4);
-    s += '<line x1="' + P + '" y1="' + y + '" x2="' + (W - 10) + '" y2="' + y + '" stroke="#242a3a" stroke-width="1"/>';
-    s += '<text x="' + (P - 6) + '" y="' + (y + 4) + '" fill="#8b93a7" font-size="10" text-anchor="end">' + val.toFixed(1) + '</text>';
+    s += '<line x1="' + P + '" y1="' + y + '" x2="' + (W - 10) + '" y2="' + y + '" stroke="#1a2130" stroke-width="1"/>';
+    s += '<text x="' + (P - 6) + '" y="' + (y + 4) + '" fill="#77839f" font-size="10" text-anchor="end">' + val.toFixed(1) + '</text>';
   }
   xLabels.forEach((lab, i) => {
     if (i % 2) return;
-    s += '<text x="' + xf(i).toFixed(1) + '" y="' + (H - 2) + '" fill="#8b93a7" font-size="10" text-anchor="middle">' + lab + '</text>';
+    s += '<text x="' + xf(i).toFixed(1) + '" y="' + (H - 2) + '" fill="#77839f" font-size="10" text-anchor="middle">' + lab + '</text>';
   });
   seriesDef.forEach(ser => {
     if (!ser.values.length) return;
@@ -97,7 +98,7 @@ function lineChartHTML(seriesDef, xLabels) {
 function renderLearn() {
   const el = $('#tab-learn');
   let html = '<h1>Learning &amp; feedback loop</h1>';
-  html += '<p class="sub">Every result you enter updates driver and team ratings, recalibrates how much the AI trusts each signal, and reports back on what changed. That is the feedback loop.</p>';
+  html += '<p class="page-sub">Every result you enter updates driver and team ratings, recalibrates how much the AI trusts each signal, and reports back on what changed. That is the feedback loop.</p>';
 
   const raceMAE = accuracySeries('race');
   const qualiMAE = accuracySeries('quali');
@@ -109,34 +110,34 @@ function renderLearn() {
 
   html += '<div class="grid3">';
   html += '<div class="card"><div class="stat"><div class="num">' + racesDone + '/24</div><div class="lbl">Races logged</div></div></div>';
-  html += '<div class="card"><div class="stat"><div class="num">' + (avg(allMAE) != null ? avg(allMAE).toFixed(2) : 'â€“') + '</div><div class="lbl">Avg position error</div></div></div>';
-  html += '<div class="card"><div class="stat"><div class="num">' + (raceRecs.length ? winsRight + '/' + raceRecs.length : 'â€“') + '</div><div class="lbl">Winners predicted</div></div></div>';
+  html += '<div class="card"><div class="stat"><div class="num">' + (avg(allMAE) != null ? avg(allMAE).toFixed(2) : '–') + '</div><div class="lbl">Avg position error</div></div></div>';
+  html += '<div class="card"><div class="stat"><div class="num">' + (raceRecs.length ? winsRight + '/' + raceRecs.length : '–') + '</div><div class="lbl">Winners predicted</div></div></div>';
   html += '</div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Prediction error over time <span class="muted small">(mean position error â€” lower is better)</span></h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Prediction error over time</span><span class="hint">mean position error — lower is better</span></div>';
   const xLabels = raceRecs.map(a => 'R' + raceById(a.raceId).round);
   html += '<div class="chartwrap">' + lineChartHTML([
-    { label: 'Race', color: '#e8a13c', values: raceMAE },
-    { label: 'Quali', color: '#5ba8d6', values: qualiMAE },
-    { label: 'Sprint', color: '#d65b9a', values: sprintMAE }
+    { label: 'Race', color: '#ffc83d', values: raceMAE },
+    { label: 'Quali', color: '#41a6ff', values: qualiMAE },
+    { label: 'Sprint', color: '#ff5fa2', values: sprintMAE }
   ], xLabels) + '</div>';
   html += '<div class="row" style="margin-top:6px">';
-  [['Race', '#e8a13c', raceMAE], ['Quali', '#5ba8d6', qualiMAE], ['Sprint', '#d65b9a', sprintMAE]].forEach(sd => {
-    html += '<span class="pill" style="margin-right:10px"><span style="width:10px;height:10px;border-radius:2px;background:' + sd[1] + ';display:inline-block"></span> ' + sd[0] + ': ' + (avg(sd[2]) != null ? avg(sd[2]).toFixed(2) : 'â€“') + '</span>';
+  [['Race', '#ffc83d', raceMAE], ['Quali', '#41a6ff', qualiMAE], ['Sprint', '#ff5fa2', sprintMAE]].forEach(sd => {
+    html += '<span class="pill" style="margin-right:10px"><span style="width:10px;height:10px;border-radius:2px;background:' + sd[1] + ';display:inline-block"></span> ' + sd[0] + ': ' + (avg(sd[2]) != null ? avg(sd[2]).toFixed(2) : '–') + '</span>';
   });
   html += '</div></div>';
 
   html += '<div class="grid2">';
-  html += '<div class="card"><h2 style="margin-top:0">Learned signal weights</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Learned signal weights</span></div>';
   html += '<div class="hint" style="margin-bottom:6px">The AI shifts trust toward whatever actually predicts results best.</div>';
   const w = state.model.w;
-  [['rating', 'Driver rating', '#3671c6'], ['form', 'Recent form', '#e8a13c'], ['quali', 'Quali speed', '#5ba8d6'], ['grid', 'Starting grid', '#7fd6c6'], ['team', 'Team + upgrades', '#b48ce8'], ['track', 'Track history', '#2ecc71']].forEach(sw => {
+  [['rating', 'Driver rating', '#3671c6'], ['form', 'Recent form', '#ffc83d'], ['quali', 'Quali speed', '#41a6ff'], ['grid', 'Starting grid', '#2ee6a8'], ['team', 'Team + upgrades', '#9d7bff'], ['track', 'Track history', '#ff5f5f']].forEach(sw => {
     const pct = Math.round(w[sw[0]] * 100);
-    html += '<div class="weightbar"><span class="lbl">' + sw[1] + '</span><div class="track"><div style="width:' + pct + '%;background:' + sw[2] + '"></div></div><span class="val">' + pct + '%</span></div>';
+    html += '<div class="wbar"><span class="lbl">' + sw[1] + '</span><div class="track"><div style="width:' + pct + '%;background:' + sw[2] + '"></div></div><span class="val">' + pct + '%</span></div>';
   });
-  html += '<div class="hint" style="margin-top:8px">Weight-learning rate ' + state.model.wlr + ' Â· K (driver) ' + state.model.K.driver + ' Â· K (team) ' + state.model.K.team + ' Â· early season learns fast.</div></div>';
+  html += '<div class="hint" style="margin-top:8px">Weight-learning rate ' + state.model.wlr + ' · K (driver) ' + state.model.K.driver + ' · K (team) ' + state.model.K.team + ' · early season learns fast.</div></div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Signal accuracy (latest)</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Signal accuracy (latest)</span></div>';
   const sigOrder = [['rating', 'Driver rating'], ['form', 'Form'], ['quali', 'Quali'], ['grid', 'Grid'], ['team', 'Team'], ['track', 'Track']];
   const sigErrs = {};
   sigOrder.forEach(s => {
@@ -146,37 +147,37 @@ function renderLearn() {
   sigOrder.forEach(s => {
     const v = sigErrs[s[0]];
     const pct = v != null ? Math.max(4, 100 - (v / 12) * 100) : 4;
-    html += '<div class="weightbar"><span class="lbl">' + s[1] + '</span><div class="track"><div style="width:' + pct + '%;background:' + (v != null && v < 3 ? 'var(--green)' : v != null && v < 6 ? 'var(--gold)' : '#e74c3c') + '"></div></div><span class="val">' + (v != null ? v.toFixed(2) : 'â€“') + '</span></div>';
+    html += '<div class="wbar"><span class="lbl">' + s[1] + '</span><div class="track"><div style="width:' + pct + '%;background:' + (v != null && v < 3 ? 'var(--green)' : v != null && v < 6 ? 'var(--gold)' : '#ff5b5b') + '"></div></div><span class="val">' + (v != null ? v.toFixed(2) : '–') + '</span></div>';
   });
   html += '<div class="hint" style="margin-top:8px">Average position error of each signal on the last few races (lower = better signal).</div></div>';
   html += '</div>';
 
   html += '<div class="grid2">';
-  html += '<div class="card"><h2 style="margin-top:0">Current learned driver ratings</h2>';
-  html += '<table><tr><th>#</th><th>Driver</th><th>Team</th><th style="text-align:right">Rating</th><th style="text-align:right">Î”</th></tr>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Current learned driver ratings</span></div>';
+  html += '<div class="chartwrap"><table class="tbl"><tr><th>#</th><th>Driver</th><th>Team</th><th class="num">Rating</th><th class="num">Δ</th></tr>';
   const sorted = DRIVERS.map(d => ({ d, r: state.driverLatent[d.id] })).sort((a, b) => b.r - a.r);
   sorted.forEach((row, i) => {
     const delta = Math.round(row.r - row.d.rating);
-    html += '<tr><td>' + (i + 1) + '</td><td>' + driverLineHTML(row.d.id) + '</td><td class="muted">' + esc(teamName(row.d.team)) + '</td>' +
-      '<td style="text-align:right;font-weight:700">' + Math.round(row.r) + '</td>' +
-      '<td style="text-align:right;color:' + (delta >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (delta > 0 ? '+' : '') + delta + '</td></tr>';
+    html += '<tr><td class="num" style="font-weight:700;color:var(--muted)">' + (i + 1) + '</td><td>' + driverLineHTML(row.d.id) + '</td><td class="muted">' + esc(teamName(row.d.team)) + '</td>' +
+      '<td class="num" style="font-weight:700">' + Math.round(row.r) + '</td>' +
+      '<td class="num" style="color:' + (delta >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (delta > 0 ? '+' : '') + delta + '</td></tr>';
   });
-  html += '</table></div>';
+  html += '</table></div></div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Learned team ratings</h2>';
-  html += '<table><tr><th>#</th><th>Team</th><th style="text-align:right">Rating</th><th style="text-align:right">Î”</th></tr>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Learned team ratings</span></div>';
+  html += '<div class="chartwrap"><table class="tbl"><tr><th>#</th><th>Team</th><th class="num">Rating</th><th class="num">Δ</th></tr>';
   const tsorted = Object.keys(TEAMS).map(t => ({ t, r: state.teamLatent[t] })).sort((a, b) => b.r - a.r);
   tsorted.forEach((row, i) => {
     const delta = Math.round(row.r - TEAMS[row.t].base);
-    html += '<tr><td>' + (i + 1) + '</td><td class="teamcell">' + teamLogoHTML(row.t, 20) + '<b style="color:' + tcolor(row.t) + '">' + esc(TEAMS[row.t].name) + '</b></td>' +
-      '<td style="text-align:right;font-weight:700">' + Math.round(row.r) + '</td>' +
-      '<td style="text-align:right;color:' + (delta >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (delta > 0 ? '+' : '') + delta + '</td></tr>';
+    html += '<tr><td class="num" style="font-weight:700;color:var(--muted)">' + (i + 1) + '</td><td class="teamcell">' + teamLogoHTML(row.t, 20) + '<b style="color:' + tcolor(row.t) + '">' + esc(TEAMS[row.t].name) + '</b></td>' +
+      '<td class="num" style="font-weight:700">' + Math.round(row.r) + '</td>' +
+      '<td class="num" style="color:' + (delta >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (delta > 0 ? '+' : '') + delta + '</td></tr>';
   });
-  html += '</table></div>';
+  html += '</table></div></div>';
   html += '</div>';
 
   html += '<div class="grid2">';
-  html += '<div class="card"><h2 style="margin-top:0">Rating evolution (top drivers)</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Rating evolution (top drivers)</span></div>';
   const top5 = sorted.slice(0, 5).map(x => x.d);
   if (state.ratingHistory.length < 1) {
     html += '<div class="hint">Ratings history will appear once you log races.</div>';
@@ -189,22 +190,22 @@ function renderLearn() {
   }
   html += '</div></div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Dev package calibration</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Dev package calibration</span></div>';
   const verds = state.devPackages.filter(p => p.verdict && !p.removed);
   if (!verds.length) {
     html += '<div class="hint">Verdicts you give on development packages will be shown here. Each verdict recalibrates how hard the AI trusts your claimed impact.</div>';
   } else {
-    html += '<table><tr><th>Package</th><th>Team</th><th>Impact</th><th>Verdict</th></tr>';
+    html += '<div class="chartwrap"><table class="tbl"><tr><th>Package</th><th>Team</th><th>Impact</th><th>Verdict</th></tr>';
     verds.forEach(p => {
       const t = teamById(p.teamId);
       const r = raceById(p.raceId);
-      html += '<tr><td class="teamcell"><img class="timg" src="' + esc(t.logo) + '"><b style="color:' + t.color + '">' + esc(t.name) + '</b></td><td class="muted">R' + r.round + ' ' + esc(r.name) + '</td><td>' + p.impact + '/100</td><td><span class="pill">' + { helped: 'Helped âœ“', neutral: 'No change', hurt: 'Hurt' }[p.verdict] + '</span></td></tr>';
+      html += '<tr><td class="teamcell"><img class="timg" src="' + esc(t.logo) + '"><b style="color:' + t.color + '">' + esc(t.name) + '</b></td><td class="muted">R' + r.round + ' ' + esc(r.name) + '</td><td>' + p.impact + '/100</td><td><span class="pill">' + { helped: 'Helped ✓', neutral: 'No change', hurt: 'Hurt' }[p.verdict] + '</span></td></tr>';
     });
-    html += '</table>';
+    html += '</table></div>';
   }
   html += '</div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Sequential model calibration <span class="muted small">(per-session, per-forecast reliability)</span></h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Sequential model calibration</span><span class="hint">per-session, per-forecast reliability</span></div>';
   if (typeof SeqAPI === 'undefined' || !state.seq) {
     html += '<div class="hint">The sequential engine records per-session calibration here once results are logged.</div>';
   } else {
@@ -215,28 +216,28 @@ function renderLearn() {
     html += '<div class="card"><div class="stat"><div class="num">' + (o.mae != null ? o.mae.toFixed(2) : '–') + '</div><div class="lbl">Mean abs error</div></div></div>';
     html += '<div class="card"><div class="stat"><div class="num">' + (o.winnerAccuracy != null ? Math.round(o.winnerAccuracy * 100) + '%' : '–') + '</div><div class="lbl">Winner accuracy</div></div></div>';
     html += '</div>';
-    html += '<table style="margin-top:8px"><tr><th>Bucket</th><th>n</th><th style="text-align:right">MAE</th><th style="text-align:right">Brier</th><th style="text-align:right">Log-loss</th><th style="text-align:right">Tau</th></tr>';
+    html += '<div class="chartwrap"><table class="tbl" style="margin-top:8px"><tr><th>Bucket</th><th>n</th><th class="num">MAE</th><th class="num">Brier</th><th class="num">Log-loss</th><th class="num">Tau</th></tr>';
     const rows = [['Overall', o]].concat(Object.keys(cal.bySession).map(k => [SESSIONS[k] ? SESSIONS[k].label : k, cal.bySession[k]]));
     rows.forEach(r => {
       const v = r[1];
       html += '<tr><td>' + esc(r[0]) + '</td><td>' + v.n + '</td>' +
-        '<td style="text-align:right">' + (v.mae != null ? v.mae.toFixed(2) : '–') + '</td>' +
-        '<td style="text-align:right">' + (v.brier != null ? v.brier.toFixed(3) : '–') + '</td>' +
-        '<td style="text-align:right">' + (v.logloss != null ? v.logloss.toFixed(3) : '–') + '</td>' +
-        '<td style="text-align:right">' + (v.tau != null ? v.tau.toFixed(3) : '–') + '</td></tr>';
+        '<td class="num">' + (v.mae != null ? v.mae.toFixed(2) : '–') + '</td>' +
+        '<td class="num">' + (v.brier != null ? v.brier.toFixed(3) : '–') + '</td>' +
+        '<td class="num">' + (v.logloss != null ? v.logloss.toFixed(3) : '–') + '</td>' +
+        '<td class="num">' + (v.tau != null ? v.tau.toFixed(3) : '–') + '</td></tr>';
     });
-    html += '</table>';
+    html += '</table></div>';
     html += '<div class="hint" style="margin-top:8px">Brier/log-loss score how well-calibrated the probability forecasts are (lower = better). Buckets by driver, team, circuit and weather are stored under the model.</div>';
   }
   html += '</div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">What the AI has learned <span class="muted small">(latest ' + Math.min(8, state.log.length) + ')</span></h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">What the AI has learned</span><span class="hint">latest ' + Math.min(8, state.log.length) + '</span></div>';
   if (!state.log.length) {
-    html += '<div class="hint">Log your first race to see the AI\'s feedback.</div>';
+    html += '<div class="hint">Log your first race to see the AI’s feedback.</div>';
   } else {
     state.log.slice(0, 8).forEach(l => {
       const r = raceById(l.raceId);
-      html += '<div class="logentry"><span class="muted small">' + (r ? r.flag + ' ' + r.name : l.raceId) + ' Â· ' + SESSIONS[l.session].label + ' Â· ' + new Date(l.at).toLocaleString() + '</span><div>' + esc(l.text) + '</div></div>';
+      html += '<div class="logentry"><span class="muted small">' + (r ? r.flag + ' ' + r.name : l.raceId) + ' · ' + SESSIONS[l.session].label + ' · ' + new Date(l.at).toLocaleString() + '</span><div>' + esc(l.text) + '</div></div>';
     });
   }
   html += '</div>';
@@ -247,28 +248,30 @@ function renderLearn() {
 /* ---------- data ---------- */
 function renderData() {
   const el = $('#tab-data');
-  let html = '<h1>Your data</h1><p class="sub">Everything is saved automatically in this browser after every change. You can also back it up to a file or move it to another machine.</p>';
+  let html = '<h1>Your data</h1><p class="page-sub">Everything is saved automatically in this browser after every change. You can also back it up to a file or move it to another machine.</p>';
 
   html += '<div class="grid2">';
-  html += '<div class="card"><h2 style="margin-top:0">Storage</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Storage</span></div>';
   html += '<div class="stat" style="text-align:left"><div class="num">' + (state.savedAt ? new Date(state.savedAt).toLocaleString() : 'never') + '</div><div class="lbl">Last auto-save</div></div>';
   html += '<div class="row" style="margin-top:10px"><button class="btn" data-a="saveNow">Save now</button><button class="btn gold" data-a="backup">Download backup file</button></div>';
   html += '</div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">Backup / restore</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">Backup / restore</span></div>';
   html += '<div class="row"><button class="btn primary" data-a="exportJson">Export data (.json)</button>';
   html += '<label class="btn" style="cursor:pointer">Import data<input type="file" accept=".json,application/json" data-a="importJson" style="display:none"></label></div>';
-  html += '<div class="hint" style="margin-top:8px">The export file contains every result, dev package, learned rating and weight â€” the full brain. Import restores it.</div>';
+  html += '<div class="hint" style="margin-top:8px">The export file contains every result, dev package, learned rating and weight — the full brain. Import restores it.</div>';
   html += '<div class="row" style="margin-top:14px"><button class="btn danger" data-a="resetAll">Factory reset (wipe everything)</button></div>';
   html += '</div></div>';
 
-  html += '<div class="card"><h2 style="margin-top:0">How the AI works</h2>';
+  html += '<div class="card"><div class="card-hd"><span class="micro">How the AI works</span></div>';
   html += '<ul class="hint" style="padding-left:18px">';
-  html += '<li><b>Six signals</b>: learned driver rating, recent form (EMA), single-lap quali speed, the real starting grid (this round\'s qualifying + back-of-grid starts), team strength (+ your dev packages), and track history.</li>';
+  html += '<li><b>Sequential loop</b>: the AI predicts only the next unknown session, freezes that forecast, observes the real result, diagnoses the error, updates its world model, then forecasts the next session. It never rewrites an old forecast after the fact.</li>';
+  html += '<li><b>Six signals</b>: learned driver rating, recent form (EMA), single-lap quali speed, the real starting grid (this round’s qualifying + back-of-grid starts), team strength (+ your dev packages), and track history.</li>';
   html += '<li><b>Feedback loop</b>: after every session you log, the AI scores its own prediction, then updates driver &amp; team ratings from head-to-head matchups (Elo-style) and re-weights the signals toward whatever predicted best.</li>';
-  html += '<li><b>DNF vs DNS</b>: DNF drivers finish behind all classified finishers and still move the ratings; DNS drivers are excluded entirely â€” the AI ignores them for that session.</li>';
-  html += '<li><b>Dev packages</b>: an upgrade lifts a team\'s predicted pace from its intro race, decaying over rounds. Your "helped / hurt / no change" verdicts recalibrate how hard it trusts your impact estimate.</li>';
-  html += '<li><b>Everything</b> â€” quali, sprint quali, sprints, races, fastest laps, weather â€” feeds the model.</li>';
+  html += '<li><b>DNF vs DNS</b>: DNF drivers finish behind all classified finishers and still move the ratings; DNS drivers are excluded entirely — the AI ignores them for that session.</li>';
+  html += '<li><b>Started from the back</b>: marked in the Qualifying entry — the AI then puts those drivers at the back of the starting grid for the Grand Prix.</li>';
+  html += '<li><b>Dev packages</b>: an upgrade lifts a team’s predicted pace from its intro race, decaying over rounds. Your "helped / hurt / no change" verdicts recalibrate how hard it trusts your impact estimate.</li>';
+  html += '<li><b>Everything</b> — quali, sprint quali, sprints, races, fastest laps, weather — feeds the model.</li>';
   html += '</ul></div>';
 
   el.innerHTML = html;
@@ -384,8 +387,8 @@ function handleAction(a, node) {
     case 'bFromBack': {
       const b = ui.builder;
       if (!b.startedBack) b.startedBack = [];
-      const i = b.startedBack.indexOf(x);
-      if (i >= 0) b.startedBack.splice(i, 1); else b.startedBack.push(x);
+      const bi = b.startedBack.indexOf(x);
+      if (bi >= 0) b.startedBack.splice(bi, 1); else b.startedBack.push(x);
       renderAll(); break;
     }
     case 'bMoveTo': break; /* handled on change to avoid double-processing */
@@ -404,7 +407,7 @@ function handleAction(a, node) {
       const w = state.weekends[ui.resRace];
       if (w) {
         delete w[ui.resSession]; if (w.dnf) delete w.dnf[ui.resSession]; if (w.dns) delete w.dns[ui.resSession];
-        if (ui.resSession === 'race' && w.startedBack) delete w.startedBack;
+        if ((ui.resSession === 'quali' || ui.resSession === 'race') && w.startedBack) delete w.startedBack;
       }
       initBuilder(ui.resRace, ui.resSession);
       mutate(() => {}); break;
@@ -418,7 +421,7 @@ function handleAction(a, node) {
     case 'bSave': {
       const b = ui.builder;
       if (b.order.length + b.dnf.length + b.dns.length !== GRID) {
-        toast('Place all ' + GRID + ' drivers â€” finishers plus any DNFs / DNS â€” first.');
+        toast('Place all ' + GRID + ' drivers — finishers plus any DNFs / DNS — first.');
         break;
       }
       const map = {};
@@ -432,6 +435,8 @@ function handleAction(a, node) {
         w.dns[b.session] = b.dns.slice();
         if (b.session === 'race') {
           w.fastLap = b.fastLap || null;
+        }
+        if (b.session === 'quali' || b.session === 'race') {
           w.startedBack = { race: (b.startedBack || []).slice() };
         }
         w.weather = b.weather;
@@ -440,7 +445,7 @@ function handleAction(a, node) {
       saveNow(); renderAll();
       if (fb) {
         toast('<b>' + SESSIONS[b.session].label + ' saved.</b><br>' + esc(fb.message), true);
-        if (b.session === 'race' && fb.winnerCorrect) toast('ðŸ† The AI predicted the winner!', true);
+        if (b.session === 'race' && fb.winnerCorrect) toast('🏆 The AI predicted the winner!', true);
       }
       break;
     }
@@ -476,7 +481,7 @@ function handleAction(a, node) {
         const p = state.devPackages.find(p => p.id === x);
         if (p) p.verdict = v;
       });
-      toast('Verdict recorded â€” the AI recalibrated how much it trusts that impact estimate.');
+      toast('Verdict recorded — the AI recalibrated how much it trusts that impact estimate.');
       break;
     }
     case 'devRemove': {
@@ -561,7 +566,7 @@ document.addEventListener('change', e => {
         renderAll();
         toast('Data imported successfully.', true);
       } catch (err) {
-        toast('Import failed â€” not a valid F1 Predictor file.');
+        toast('Import failed — not a valid F1 Predictor file.');
       }
     };
     reader.readAsText(t.files[0]);
@@ -579,7 +584,7 @@ function clearDragOver() {
   document.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over'));
 }
 document.addEventListener('dragstart', e => {
-  const row = e.target.closest('.orderitem[data-drag]');
+  const row = e.target.closest('.oitem[data-drag]');
   if (!row) return;
   dragId = row.dataset.drag;
   e.dataTransfer.effectAllowed = 'move';
@@ -587,7 +592,7 @@ document.addEventListener('dragstart', e => {
   setTimeout(() => row.classList.add('dragging'), 0);
 });
 document.addEventListener('dragover', e => {
-  const row = e.target.closest('.orderitem[data-drag]');
+  const row = e.target.closest('.oitem[data-drag]');
   if (!row || !dragId) return;
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
@@ -595,12 +600,12 @@ document.addEventListener('dragover', e => {
   row.classList.add('drag-over');
 });
 document.addEventListener('dragleave', e => {
-  const row = e.target.closest('.orderitem[data-drag]');
+  const row = e.target.closest('.oitem[data-drag]');
   if (row) row.classList.remove('drag-over');
 });
 document.addEventListener('drop', e => {
   e.preventDefault();
-  const row = e.target.closest('.orderitem[data-drag]');
+  const row = e.target.closest('.oitem[data-drag]');
   if (!row || !dragId) { clearDragOver(); dragId = null; return; }
   const b = ui.builder;
   const from = b.order.indexOf(dragId);
