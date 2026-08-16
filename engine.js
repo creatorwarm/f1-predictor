@@ -4,6 +4,10 @@
    - EMA form tracking, DNF + DNS handling, stored predictions for compare */
 'use strict';
 
+/* seeded RNG hook - seqengine.js (loaded later) sets this to make predictions
+   reproducible; engine.js falls back to Math.random() when it is null */
+var __seqRng = null;
+
 /* ---------- default state ---------- */
 function defaultState() {
   const d = {}, q = {}, s = {}, f = {}, qe = {}, se = {};

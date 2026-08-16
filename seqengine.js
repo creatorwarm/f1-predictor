@@ -21,6 +21,9 @@
    */
 'use strict';
 
+/* declared here too so a stale-cached engine.js can never leave it undefined */
+var __seqRng = null;
+
 /* ============================================================================
    1. CONSTANTS & SCHEMAS
    ============================================================================ */
