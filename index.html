@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Predictor 2026</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏎️</text></svg>">
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="f1dot">F1</div>
+    <div>Predictor 2026<small>predict first · then the AI learns</small></div>
+  </div>
+  <nav id="nav">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="predict">Predictions</button>
+    <button data-tab="results">Results</button>
+    <button data-tab="dev">Dev Packages</button>
+    <button data-tab="learn">Learning</button>
+    <button data-tab="data">Data</button>
+  </nav>
+  <div class="savebox">
+    <span class="dot" id="savedot"></span><span id="savetxt">Ready</span>
+  </div>
+</header>
+
+<main>
+  <section id="tab-dashboard" class="tab active"></section>
+  <section id="tab-predict" class="tab"></section>
+  <section id="tab-results" class="tab"></section>
+  <section id="tab-dev" class="tab"></section>
+  <section id="tab-learn" class="tab"></section>
+  <section id="tab-data" class="tab"></section>
+</main>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="seqengine.js"></script>
+<script src="app.js"></script>
+<script src="app2.js"></script>
+</body>
+</html>
