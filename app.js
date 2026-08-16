@@ -215,25 +215,28 @@ function renderDashboard() {
 
   /* ---- sequential engine weekend state ---- */
   if (typeof SeqAPI !== 'undefined' && state.seq) {
-    const ws = SeqAPI.weekendState(state, ui.wkRace);
-    const locked = ws.nextSession ? SeqAPI.prediction(state, ui.wkRace, ws.nextSession) : null;
-    const wm = state.seq.worldModel;
-    const evCount = state.seq.evidence.length;
-    const cal = SeqAPI.calibration(state).overall;
-    html += '<div class="card"><div class="spread"><span class="subhead" style="margin:0">Sequential engine</span>';
-    html += '<span class="pill">' + esc(ws.phase) + '</span></div>';
-    html += '<div class="row" style="margin-top:8px">';
-    html += '<span class="sessionbadge' + (ws.nextSession ? '' : ' on') + '">next: ' + esc(ws.nextSession || 'done') + '</span>';
-    html += '<span class="sessionbadge' + (ws.awaitingResults ? ' on' : '') + '">' + (ws.awaitingResults ? 'awaiting results' : 'forecast open') + '</span>';
-    html += '<span class="sessionbadge' + (locked ? ' on' : '') + '">' + (locked ? 'locked ✓' : 'unlocked') + '</span>';
-    html += '<span class="sessionbadge">evidence ' + evCount + '</span>';
-    if (cal.n) html += '<span class="sessionbadge">cal MAE ' + (cal.mae != null ? cal.mae.toFixed(2) : '–') + ' · Brier ' + (cal.brier != null ? cal.brier.toFixed(3) : '–') + '</span>';
-    html += '</div>';
-    if (locked) {
-      html += '<div class="hint" style="margin-top:6px">' + esc(locked.prediction.order[0] ? driverById(locked.prediction.order[0]).name : '') +
-        ' leads the locked ' + SESSIONS[locked.session].label + ' forecast (confidence ' + locked.confidence + '%).</div>';
+    try {
+      const ws = SeqAPI.weekendState(state, ui.wkRace);
+      const locked = ws.nextSession ? SeqAPI.prediction(state, ui.wkRace, ws.nextSession) : null;
+      const evCount = Array.isArray(state.seq.evidence) ? state.seq.evidence.length : 0;
+      const cal = SeqAPI.calibration(state).overall || {};
+      html += '<div class="card"><div class="spread"><span class="subhead" style="margin:0">Sequential engine</span>';
+      html += '<span class="pill">' + esc(ws.phase) + '</span></div>';
+      html += '<div class="row" style="margin-top:8px">';
+      html += '<span class="sessionbadge' + (ws.nextSession ? '' : ' on') + '">next: ' + esc(ws.nextSession || 'done') + '</span>';
+      html += '<span class="sessionbadge' + (ws.awaitingResults ? ' on' : '') + '">' + (ws.awaitingResults ? 'awaiting results' : 'forecast open') + '</span>';
+      html += '<span class="sessionbadge' + (locked ? ' on' : '') + '">' + (locked ? 'locked ✓' : 'unlocked') + '</span>';
+      html += '<span class="sessionbadge">evidence ' + evCount + '</span>';
+      if (cal.n) html += '<span class="sessionbadge">cal MAE ' + (cal.mae != null ? cal.mae.toFixed(2) : '–') + ' · Brier ' + (cal.brier != null ? cal.brier.toFixed(3) : '–') + '</span>';
+      html += '</div>';
+      if (locked && locked.prediction && SESSIONS[locked.session]) {
+        html += '<div class="hint" style="margin-top:6px">' + esc(locked.prediction.order[0] ? driverById(locked.prediction.order[0]).name : '') +
+          ' leads the locked ' + SESSIONS[locked.session].label + ' forecast (confidence ' + locked.confidence + '%).</div>';
+      }
+      html += '</div>';
+    } catch (e) {
+      console.error('seq dashboard card:', e);
     }
-    html += '</div>';
   }
 
   /* ---- the predict → enter → learn workflow ---- */

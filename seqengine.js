@@ -205,9 +205,27 @@ function seqDefaultState(state) {
     settings: { seqPaceWeight: 0.12, mcSims: MC_DEFAULT_SIMS, mcLaps: MC_LAPS }
   };
 }
-/* overrides the stub in engine.js - safe to call at any time */
+/* overrides the stub in engine.js - safe to call at any time. Repairs states
+   saved by an older build (partial seq objects) as well as brand-new ones. */
 function ensureSeqState(state) {
-  if (!state.seq || state.seq.version !== SEQ_VERSION) state.seq = seqDefaultState(state);
+  if (!state.seq || state.seq.version !== SEQ_VERSION) {
+    state.seq = seqDefaultState(state);
+    return state;
+  }
+  const d = seqDefaultState(state);
+  Object.keys(d).forEach(k => { if (state.seq[k] === undefined) state.seq[k] = d[k]; });
+  if (!state.seq.meta) state.seq.meta = d.meta;
+  else Object.keys(d.meta).forEach(k => { if (state.seq.meta[k] === undefined) state.seq.meta[k] = d.meta[k]; });
+  if (!state.seq.worldModel || !state.seq.worldModel.drivers || !state.seq.worldModel.teams) state.seq.worldModel = d.worldModel;
+  if (!state.seq.calibration) state.seq.calibration = d.calibration;
+  if (!Array.isArray(state.seq.evidence)) state.seq.evidence = [];
+  if (!state.seq.evidenceIndex) state.seq.evidenceIndex = {};
+  if (!state.seq.predictionLedger) state.seq.predictionLedger = {};
+  if (!state.seq.predCache) state.seq.predCache = {};
+  if (!state.seq.featureCache) state.seq.featureCache = {};
+  if (!Array.isArray(state.seq.evaluations)) state.seq.evaluations = [];
+  if (!Array.isArray(state.seq.outliers)) state.seq.outliers = [];
+  if (!Array.isArray(state.seq.lessons)) state.seq.lessons = [];
   return state;
 }
 function bucketOf(cal, key) {
@@ -1115,7 +1133,11 @@ function updateCalibration(state, eventId, session, locked, actualMap, meta) {
     pushCapped(bucketOf(state.seq.calibration.byTeam, d.team).recs, drec, 100);
   });
 }
+function emptyCal() {
+  return { n: 0, mae: null, brier: null, logloss: null, tau: null, winnerAccuracy: null, dnfMean: null };
+}
 function aggregateRecs(recs) {
+  if (!recs || !recs.length) return emptyCal();
   return {
     n: recs.length,
     mae: avg(recs.map(r => r.mae)),
@@ -1134,16 +1156,18 @@ function calibrationSummary(state) {
   const cal = state.seq.calibration;
   const mapOf = obj => {
     const out = {};
+    if (!obj) return out;
     Object.keys(obj).forEach(k => { out[k] = aggregateRecs(obj[k].recs); });
     return out;
   };
+  const overall = (cal && cal.overall) ? aggregateRecs(cal.overall.recs) : emptyCal();
   return {
-    overall: aggregateRecs(cal.overall.recs),
-    bySession: mapOf(cal.bySession),
-    byCircuit: mapOf(cal.byCircuit),
-    byWeather: mapOf(cal.byWeather),
-    byDriver: mapOf(cal.byDriver),
-    byTeam: mapOf(cal.byTeam)
+    overall,
+    bySession: mapOf(cal && cal.bySession),
+    byCircuit: mapOf(cal && cal.byCircuit),
+    byWeather: mapOf(cal && cal.byWeather),
+    byDriver: mapOf(cal && cal.byDriver),
+    byTeam: mapOf(cal && cal.byTeam)
   };
 }
 
