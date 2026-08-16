@@ -67,10 +67,12 @@ function showTab(name) {
 function raceOption(raceId) {
   const r = raceById(raceId);
   const done = hasSession(state, raceId, 'race');
-  return '<option value="' + raceId + '">' + (done ? '✓ ' : '') + r.flag + ' R' + r.round + ' · ' + r.name + '</option>';
+  return (done ? '✓ ' : '') + r.flag + ' R' + r.round + ' · ' + r.name;
 }
 function raceSelectHtml(id) {
-  return '<select id="' + id + '">' + RACES.map(r => raceOption(r.id)).join('') + '</select>';
+  const cur = id === 'predRaceSel' ? ui.predRace : id === 'resRaceSel' ? ui.resRace : id === 'devRaceSel' ? ui.devRace : (ui.wkRace || RACES[0].id);
+  return '<select id="' + id + '">' + RACES.map(r =>
+    '<option value="' + r.id + '"' + (r.id === cur ? ' selected' : '') + '>' + raceOption(r.id) + '</option>').join('') + '</select>';
 }
 function sessionFlow(raceId) {
   const r = raceById(raceId);
