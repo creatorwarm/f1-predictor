@@ -89,22 +89,43 @@ function sessionDoneBadges(raceId) {
 }
 
 function renderAll() {
-  renderDashboard();
-  renderPredict();
-  renderResults();
-  renderDev();
-  renderLearn();
-  renderData();
+  const errors = [];
+  [renderDashboard, renderPredict, renderResults, renderDev, renderLearn, renderData].forEach(fn => {
+    try { fn(); } catch (e) { errors.push(fn.name + ': ' + (e && e.message ? e.message : e)); }
+  });
   $$('section.tab').forEach(s => s.classList.toggle('active', s.id === 'tab-' + ui.tab));
+  if (errors.length) showRenderErrors(errors);
+}
+function showRenderErrors(errors) {
+  const el = $('#tab-dashboard');
+  if (!el) return;
+  const box = document.createElement('div');
+  box.style.cssText = 'margin:10px;padding:10px 14px;background:#3a1010;color:#ffb3b3;border:1px solid var(--red,#e74c3c);border-radius:8px;font-size:13px;line-height:1.5';
+  box.innerHTML = '<b>Rendering problem (the rest of the page still works):</b><ul style="margin:6px 0 0 18px">' +
+    errors.map(e => '<li>' + esc(e) + '</li>').join('') + '</ul>';
+  el.appendChild(box);
+}
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('error', e => {
+    try {
+      const el = $('#tab-dashboard');
+      if (!el) return;
+      const box = document.createElement('div');
+      box.style.cssText = 'margin:10px;padding:10px 14px;background:#3a1010;color:#ffb3b3;border:1px solid var(--red,#e74c3c);border-radius:8px;font-size:13px';
+      box.innerHTML = '<b>Script error:</b> ' + esc(e.message || 'unknown error');
+      el.appendChild(box);
+    } catch (err) { /* never let the handler itself throw */ }
+  });
 }
 
 /* ---------- f1.com-style building blocks ---------- */
 /* circular driver face sitting on a team-colour background */
 function faceHTML(id, size) {
   const d = driverById(id);
-  const c = tcolor(d.team);
+  const c = d ? tcolor(d.team) : '#999';
   const px = size ? ('style="width:' + size + 'px;height:' + size + 'px"') : '';
-  return '<span class="face" style="--t:' + c + ';' + (size ? 'width:' + size + 'px;height:' + size + 'px' : '') + '"><img src="' + esc(d.img) + '" alt=""></span>';
+  return '<span class="face" style="--t:' + c + ';' + (size ? 'width:' + size + 'px;height:' + size + 'px' : '') + '">' +
+    (d ? '<img src="' + esc(d.img) + '" alt="">' : '<b class="drv-code" style="color:#999">?</b>') + '</span>';
 }
 /* name + short code in team colour (f1.com standings style) */
 function nameCodeHTML(id) {
@@ -117,6 +138,7 @@ function driverLineHTML(id) {
 }
 function teamLogoHTML(teamId, h) {
   const t = TEAMS[teamId];
+  if (!t) return '<span class="muted small">' + esc(teamId) + '</span>';
   return '<img class="teamlogo" style="height:' + (h || 18) + 'px" src="' + esc(t.logo) + '" alt="' + esc(t.name) + '">';
 }
 
@@ -378,14 +400,14 @@ function comparePanelHTML(raceId, session) {
     const hit = ap != null && ap === i + 1;
     const tag = hit ? '<span class="cmptag ok">✓</span>' : (ap != null ? '<span class="cmptag">→ P' + ap + '</span>' : '<span class="cmptag">–</span>');
     s += '<div class="cmplist' + (hit ? ' hit' : ' miss') + '"><span class="cmpno">P' + (i + 1) + '</span>' + faceHTML(id, 30) +
-      '<span class="drv-code" style="color:' + tcolor(driverById(id).team) + '">' + esc(driverShort(id)) + '</span>' + tag + '</div>';
+      '<span class="drv-code" style="color:' + (driverById(id) ? tcolor(driverById(id).team) : '#999') + '">' + esc(driverShort(id)) + '</span>' + tag + '</div>';
   });
   s += '</div>';
   s += '<div class="cmphalf"><div class="cmphd">Actual result</div>';
   actualOrder.forEach((id, i) => {
     const hit = predMap[id] === i + 1;
     s += '<div class="cmplist' + (hit ? ' hit' : '') + '"><span class="cmpno">P' + (i + 1) + '</span>' + faceHTML(id, 30) +
-      '<span class="drv-code" style="color:' + tcolor(driverById(id).team) + '">' + esc(driverShort(id)) + '</span>' +
+      '<span class="drv-code" style="color:' + (driverById(id) ? tcolor(driverById(id).team) : '#999') + '">' + esc(driverShort(id)) + '</span>' +
       (hit ? '<span class="cmptag ok">✓</span>' : (predMap[id] != null ? '<span class="cmptag">was P' + predMap[id] + '</span>' : '<span class="cmptag">–</span>')) + '</div>';
   });
   s += '</div></div>';
